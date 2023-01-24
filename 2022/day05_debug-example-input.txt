@@ -1,0 +1,27 @@
+
+LINE = "    [D]    "
+self.stack_strings = ['_D_']
+
+LINE = "[N] [C]    "
+self.stack_strings = ['_D_', 'NC_']
+
+LINE = "[Z] [M] [P]"
+self.stack_strings = ['_D_', 'NC_', 'ZMP']
+
+LINE = " 1   2   3 "
+self.stack_numbers = [1, 2, 3], proceeding to list_transpose()
+
+['ZMP', 'NC_', '_D_']
+{1: ['Z', 'N'], 2: ['M', 'C', 'D'], 3: ['P']}
+
+LINE = ""
+
+LINE = "move 1 from 2 to 1"
+
+LINE = "move 3 from 1 to 3"
+
+LINE = "move 2 from 2 to 1"
+
+LINE = "move 1 from 1 to 2"
+-----
+Part 1 answer: CMZ
