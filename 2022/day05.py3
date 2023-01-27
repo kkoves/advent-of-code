@@ -1,16 +1,19 @@
 #!/usr/bin/python3
 # part 1 completed 2023-01-21 19:03 ET
+# part 2 completed 2023-01-26 23:29 ET
 
-import sys, re
-
+import sys, re, copy
 
 class AdventOfCodeDay5:
   def __init__(self):
     self.stack_numbers = []
     self.stack_strings = []
-    self.stacks = {}
+    self.stacks_cratemover9000 = {}
+    self.stacks_cratemover9001 = {}
 
 
+  # This function is called by re.sub later to help turn stack input lines into simpler strings
+  # For example: "    [A] [B]" --> "_AB"
   def simplify_column(self, match_obj):
     crate_col = match_obj.group(1)
 
@@ -24,29 +27,63 @@ class AdventOfCodeDay5:
       return crate_col
 
 
+  # Input lines are in a different orientation to final stacks, essentially we make the input
+  # "sideways" in final stack representation, swapping row and column, so:
+  #    [B] [D]
+  #    [A] [C]
+  #     1   2
+  # becomes:
+  # {
+  #   1: ['A', 'B']
+  #   2: ['C', 'D']
+  # }
+  # Function is named as such since this is basically a matrix transposition
   def list_transpose(self):
     # last element of stack_numbers is the total number of crate stacks
     num_stacks = self.stack_numbers[-1]
     self.stack_strings.reverse()
-    # print(self.stack_strings)
 
     curr_stack = 0
     for i in range(num_stacks):
       curr_stack = self.stack_numbers[i]
-      self.stacks[curr_stack] = [s[i] for s in self.stack_strings if s[i] != '_']
-      # print(f'{i = }, {curr_stack = }, {self.stacks[curr_stack] = }')
+      # after list of strings is reversed before loop, we just have to get the i-th
+      # element of each string to get each crate label for the stacks, ignoring blanks ('_')
+      self.stacks_cratemover9000[curr_stack] = [s[i] for s in self.stack_strings if s[i] != '_']
+
+    # make a copy of the finalized stacks to work with independently for day 5 part 2
+    self.stacks_cratemover9001 = copy.deepcopy(self.stacks_cratemover9000)
 
 
-  def move_crates(self, how_many, source, dest):
+  # CrateMover 9000 can only move one crate at a time from the top of each stack
+  def move_crates_cratemover9000(self, how_many, source, dest):
     for _ in range(how_many):
-      source_stack_val = self.stacks[source].pop()
-      self.stacks[dest].append(source_stack_val)
+      source_stack_val = self.stacks_cratemover9000[source].pop()
+      self.stacks_cratemover9000[dest].append(source_stack_val)
 
 
-  def top_of_stacks(self):
+  # CrateMover 9001 can move several (no limit specified in prompt) crates at once
+  # from the top of each stack, thus keeping them in the same order on the new stack
+  def move_crates_cratemover9001(self, how_many, source, dest):
+    # go backward from top of source stack by how_many to grab those crates, then remove them
+    crates_moving = self.stacks_cratemover9001[source][-how_many:]
+    del self.stacks_cratemover9001[source][-how_many:]
+
+    # add crates we're moving to top of destination stack
+    self.stacks_cratemover9001[dest].extend(crates_moving)
+
+
+  # Returns the result we need for part 1 and part 2, the labels of the crates on top of each stack
+  # Takes CrateMover model number (9000 or 9001) as an argument to determine which result stack
+  # to pull from
+  def top_of_stacks(self, cratemover_model):
+    if cratemover_model == 9000:
+      stack = self.stacks_cratemover9000
+    elif cratemover_model == 9001:
+      stack = self.stacks_cratemover9001
+
     top_string = ''
     for i in self.stack_numbers:
-      top_string += self.stacks[i][-1]
+      top_string += stack[i][-1]
 
     return top_string
 
@@ -62,27 +99,26 @@ class AdventOfCodeDay5:
 
     for line in sys.stdin:
       line = line.rstrip('\n')
-      # print(f'\nLINE = "{line}"')
 
       # crates - '   [A] [B]   ' etc. lines of input
       if '[' in line:
         self.stack_strings += [re.sub(stack_regex, self.simplify_column, line)]
-        # print(f'{self.stack_strings = }')
 
       # stack numbers - ' 1 2 3 4 5 [...]' line of input; always has a space as line[0], so check line[1]
       elif len(line) > 1 and line[1].isnumeric():
         self.stack_numbers = [int(s) for s in line.split()]
-        # print(f'{self.stack_numbers = }, proceeding to list_transpose()\n')
-        # since stack numbers are after stack lines, we can finalize our data structure representation
+        # since stack numbers are after stack lines, we can now finalize our data structure representation
         self.list_transpose()
-        # print(self.stacks)
 
-      # get every other element, which works out to just the numbers from "move 1 from 2 to 3"
+      # get every other element of split-by-words move line, which works out to
+      # just the numbers from "move 1 from 2 to 3", so [1, 2, 3]
       elif line.startswith('move'):
-        curr_move = [int(num_str) for num_str in line.split()[1::2]] # returns [1, 2, 3] or the like
-        self.move_crates(curr_move[HOW_MANY], curr_move[FROM_STACK], curr_move[TO_STACK])
+        move = [int(num_str) for num_str in line.split()[1::2]]
+        self.move_crates_cratemover9000(move[HOW_MANY], move[FROM_STACK], move[TO_STACK])
+        self.move_crates_cratemover9001(move[HOW_MANY], move[FROM_STACK], move[TO_STACK])
 
-    print(f'-----\nPart 1 answer: {self.top_of_stacks()}')
+    print(f'-----\nPart 1 answer: {self.top_of_stacks(9000)}')
+    print(f'-----\nPart 2 answer: {self.top_of_stacks(9001)}')
 
 
 if __name__ == '__main__':
