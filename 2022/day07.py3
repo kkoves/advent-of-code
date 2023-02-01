@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# completed 2023-01-__ __:__ ET
+# part 1 completed 2023-02-01 03:23 ET
 
 import sys
 
@@ -10,6 +10,10 @@ class Directory:
     self.children = children
     self.parent = parent
     self.size = 0
+
+  # default sort by size
+  def __lt__(self, other):
+    return self.size < other.size
 
 
 class File:
@@ -23,6 +27,10 @@ class FileSystemAnalyzer:
     self.root_dir = Directory('/')
     self.curr_dir = self.root_dir
     self._DEBUG = debug
+    # to prevent clashes between files and directories with the same name
+    self.DIR_PREFIX = 'DIR_'
+    # to store results for part 1, directories with size <= 100k
+    self.dirs_100k = []
 
   def change_dir(self, dest_dir):
     if dest_dir == '..':
@@ -30,10 +38,12 @@ class FileSystemAnalyzer:
                        f' to parent dir ("{self.curr_dir.parent.name}")')
       self.curr_dir = self.curr_dir.parent
     else:
+      dest_dir = self.DIR_PREFIX + dest_dir
       self.curr_dir = self.curr_dir.children[dest_dir]
 
   def create_dir(self, dir_name):
     new_dir = Directory(dir_name, parent=self.curr_dir)
+    dir_name = self.DIR_PREFIX + dir_name
     self.curr_dir.children[dir_name] = new_dir
 
   def create_file(self, file_name, file_size):
@@ -43,8 +53,18 @@ class FileSystemAnalyzer:
 
   def update_dir_sizes(self, file):
     dir_pointer = self.curr_dir
+    HUNDRED_K = 100000
+
     while True:
       dir_pointer.size += file.size
+
+      # for part 1 - update list of directories up to 100,000 in size as needed
+      if (dir_pointer is not self.root_dir and dir_pointer.size <= HUNDRED_K
+          and dir_pointer not in self.dirs_100k):
+        self.dirs_100k.append(dir_pointer)
+      elif dir_pointer in self.dirs_100k and dir_pointer.size > HUNDRED_K:
+        self.dirs_100k.remove(dir_pointer)
+
       self.debug_print(f'  - new size of dir "{dir_pointer.name}": {dir_pointer.size}')
       if dir_pointer.parent != None:
         dir_pointer = dir_pointer.parent
@@ -58,6 +78,19 @@ class FileSystemAnalyzer:
       if input_line:
         message = f' {input_line.ljust(20)} | {message}'
       print(message)
+
+  def print_part1(self):
+    message = ' Part 1 results - directories up to 100k in size'
+    fancy_line = '=' * (len(message) + 1)
+    print(fancy_line, message, fancy_line, sep='\n')
+
+    # sort and print largest to smallest
+    self.dirs_100k.sort(reverse=True)
+    for dir in self.dirs_100k:
+      print(f'  "{dir.name}" - size {dir.size}')
+
+    sum_100k = sum(dir.size for dir in self.dirs_100k)
+    print(f'Sum: {sum_100k}')
 
   def scan(self):
     for line in sys.stdin:
@@ -81,6 +114,8 @@ class FileSystemAnalyzer:
 
         case _:
           self.debug_print(f'ignored / no matching pattern', line)
+
+    self.print_part1()
 
 
 if __name__ == '__main__':

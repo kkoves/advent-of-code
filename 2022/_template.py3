@@ -1,5 +1,6 @@
 #!/usr/bin/python3
-# completed 2023-01-__ __:__ ET
+# part 1 completed 2023-02-__ __:__ ET
+# part 2 completed 2023-02-__ __:__ ET
 
 import sys
 

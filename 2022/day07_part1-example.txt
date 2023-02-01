@@ -42,3 +42,9 @@
  7214296 k            | found file "k", size 7214296
   - new size of dir "d": 24933642
   - new size of dir "/": 48381165
+=================================================
+ Part 1 results - directories up to 100k in size
+=================================================
+  dir "a" - size 94853
+  dir "e" - size 584
+Sum: 95437
