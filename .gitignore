@@ -3,6 +3,7 @@ desktop.ini
 
 # AoC input files and resulting output, minus example inputs that are public
 *.in
+*.out
 *output.txt
 
 # personal notes for some of the problems

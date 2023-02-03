@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 # part 1 completed 2023-02-01 03:23 ET
+# part 2 completed 2023-02-02 23:26 ET
 
 import sys
 
@@ -31,6 +32,7 @@ class FileSystemAnalyzer:
     self.DIR_PREFIX = 'DIR_'
     # to store results for part 1, directories with size <= 100k
     self.dirs_100k = []
+    self.all_dirs = []
 
   def change_dir(self, dest_dir):
     if dest_dir == '..':
@@ -45,6 +47,7 @@ class FileSystemAnalyzer:
     new_dir = Directory(dir_name, parent=self.curr_dir)
     dir_name = self.DIR_PREFIX + dir_name
     self.curr_dir.children[dir_name] = new_dir
+    self.all_dirs.append(new_dir)
 
   def create_file(self, file_name, file_size):
     new_file = File(file_name, file_size, self.curr_dir)
@@ -76,21 +79,50 @@ class FileSystemAnalyzer:
       # pretty-print command inputs/outputs so they all line up nicely in debug output;
       # left-justify by 20 chars, since longest input line is 19 chars
       if input_line:
-        message = f' {input_line.ljust(20)} | {message}'
+        message = f'{input_line.ljust(20)} | {message}'
       print(message)
 
-  def print_part1(self):
-    message = ' Part 1 results - directories up to 100k in size'
+  def print_title(self, message):
     fancy_line = '=' * (len(message) + 1)
     print(fancy_line, message, fancy_line, sep='\n')
 
+  def print_part1(self):
+    message = 'Part 1 results - directories up to 100K in size'
+    self.print_title(message)
+
     # sort and print largest to smallest
     self.dirs_100k.sort(reverse=True)
-    for dir in self.dirs_100k:
-      print(f'  "{dir.name}" - size {dir.size}')
+    sum_100k = 0
+    for curr_dir in self.dirs_100k:
+      sum_100k += curr_dir.size
+      print(f'| "{curr_dir.name}" - size {curr_dir.size}, parent "{curr_dir.parent.name}"')
 
-    sum_100k = sum(dir.size for dir in self.dirs_100k)
     print(f'Sum: {sum_100k}')
+
+  def print_part2(self):
+    total_disk_space = 70000000
+    free_space = total_disk_space - self.root_dir.size
+    space_needed = 30000000
+    space_to_clear = space_needed - free_space
+    dir_to_delete = None
+
+    message = 'Part 2 results - directory to delete to make 30M free space'
+    self.print_title(message)
+
+    # look through all dirs from smallest up to the size we need to clear
+    self.all_dirs.sort()
+    for curr_dir in self.all_dirs:
+      if curr_dir.size >= space_to_clear:
+        dir_to_delete = curr_dir
+        break
+
+    print( '| Total disk space:', total_disk_space)
+    print( '| Free space:', free_space)
+    print( '| Space needed:', space_needed)
+    print( '| Space to clear:', space_to_clear)
+    print(f'Directory to delete: "{dir_to_delete.name}" - size {dir_to_delete.size}, '
+          f'parent "{dir_to_delete.parent.name}"')
+
 
   def scan(self):
     for line in sys.stdin:
@@ -101,7 +133,7 @@ class FileSystemAnalyzer:
           self.debug_print(f'changing current dir to "{dest_dir}"', line)
           self.change_dir(dest_dir)
 
-        case ['$', 'ls']: # maybe don't need this case, nothing to be done in our code when `ls` is run
+        case ['$', 'ls']:
           self.debug_print(f'listing current dir "{self.curr_dir.name}"', line)
 
         case ['dir', dir_name]:
@@ -116,6 +148,7 @@ class FileSystemAnalyzer:
           self.debug_print(f'ignored / no matching pattern', line)
 
     self.print_part1()
+    self.print_part2()
 
 
 if __name__ == '__main__':
